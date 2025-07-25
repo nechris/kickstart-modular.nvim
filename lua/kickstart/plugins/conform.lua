@@ -38,6 +38,7 @@ return {
         javascript = { 'prettierd', 'prettier', stop_after_first = true },
         typescript = { 'prettierd', 'prettier', stop_after_first = true },
         typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+        swift = { 'swiftlint_custom' }, -- <-- Add this line
       },
       formatters = {
         swiftlint_custom = {
