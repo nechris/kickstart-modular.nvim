@@ -23,10 +23,11 @@ return {
       'mason-org/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
-      -- Useful status updates for LSP.
-      { 'j-hui/fidget.nvim',    opts = {} },
+      -- Useful status updates for LSP
+      { 'j-hui/fidget.nvim', opts = {} },
 
       -- Allows extra capabilities provided by blink.cmp
+      -- Completion capabilities
       'saghen/blink.cmp',
     },
     config = function()
@@ -114,6 +115,20 @@ return {
           ---@param method vim.lsp.protocol.Method
           ---@param bufnr? integer some lsp support methods only in specific files
           ---@return boolean
+          -- Diagnostics and info
+          map('<leader><leader>d', '<cmd>Telescope diagnostics bufnr=0<CR>', 'Show Buffer Diagnostics')
+          map('[d', function()
+            vim.diagnostic.jump { count = -1 }
+            vim.cmd 'normal! zz'
+          end, 'Go to Previous Diagnostic')
+          map(']d', function()
+            vim.diagnostic.jump { count = 1 }
+            vim.cmd 'normal! zz'
+          end, 'Go to Next Diagnostic')
+          map('K', vim.lsp.buf.hover, 'Hover Documentation')
+          map('<leader>rl', ':LspRestart | LspStart<CR>', 'Restart LSP')
+
+          -- Utility
           local function client_supports_method(client, method, bufnr)
             if vim.fn.has 'nvim-0.11' == 1 then
               return client:supports_method(method, bufnr)
@@ -135,13 +150,11 @@ return {
               group = highlight_augroup,
               callback = vim.lsp.buf.document_highlight,
             })
-
             vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
               buffer = event.buf,
               group = highlight_augroup,
               callback = vim.lsp.buf.clear_references,
             })
-
             vim.api.nvim_create_autocmd('LspDetach', {
               group = vim.api.nvim_create_augroup('kickstart-lsp-detach', { clear = true }),
               callback = function(event2)
@@ -219,9 +232,10 @@ return {
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         ts_ls = {},
-        --
         sourcekit = {
           cmd = { vim.fn.trim(vim.fn.system 'xcrun -f sourcekit-lsp') },
+          filetypes = { 'swift', 'objective-c', 'objective-cpp' },
+          root_dir = require('lspconfig.util').root_pattern('buildServer.json', 'Package.swift', '.git'),
           capabilities = {
             workspace = {
               didChangeWatchedFiles = {
@@ -246,7 +260,6 @@ return {
             },
           },
         },
-
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },
@@ -277,16 +290,18 @@ return {
       -- You can add other tools here that you want Mason to install
       -- for you, so that they are available from within Neovim.
       -- Filter out LSPs that are not managed by Mason (like 'sourcekit')
+      -- Setup helper
+      local function setup_server(name, config)
+        vim.notify('[LSP] Setting up server: ' .. name, vim.log.levels.WARN)
+        config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, config.capabilities or {})
+        require('lspconfig')[name].setup(config)
+      end
+
+      -- Install tools except sourcekit
       local ensure_installed = vim.tbl_filter(function(name)
         return name ~= 'sourcekit'
       end, vim.tbl_keys(servers or {}))
-
-      -- Add any extra non-LSP tools you want Mason to install
-      vim.list_extend(ensure_installed, {
-        'stylua', -- Used to format Lua code
-      })
-
-      -- Setup mason-tool-installer with the cleaned list
+      vim.list_extend(ensure_installed, { 'stylua' })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
@@ -295,15 +310,15 @@ return {
         automatic_enable = true,
         handlers = {
           function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
+            setup_server(server_name, servers[server_name] or {})
           end,
         },
       }
+
+      -- Manual sourcekit setup
+      if servers.sourcekit then
+        setup_server('sourcekit', servers.sourcekit)
+      end
     end,
   },
 }

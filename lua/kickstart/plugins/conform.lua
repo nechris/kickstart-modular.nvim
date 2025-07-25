@@ -39,6 +39,19 @@ return {
         typescript = { 'prettierd', 'prettier', stop_after_first = true },
         typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
       },
+      formatters = {
+        swiftlint_custom = {
+          command = 'swiftlint',
+          args = {
+            '--config',
+            vim.fn.expand '.swiftlint.yml', -- force local config (symlink works)
+            '--fix',
+            '--path',
+            '$FILENAME',
+          },
+          stdin = false,
+        },
+      },
     },
   },
 }

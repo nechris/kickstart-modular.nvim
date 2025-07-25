@@ -58,6 +58,10 @@ require('lazy').setup({
 
   require 'kickstart.plugins.debug',
 
+  require 'kickstart.plugins.dap',
+
+  require 'kickstart.plugins.dap-ui',
+
   -- NOTE: Explore
   --
   -- require 'kickstart.plugins.indent_line',
