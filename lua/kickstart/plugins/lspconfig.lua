@@ -232,6 +232,7 @@ return {
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         ts_ls = {},
+        gdscript = {},
         sourcekit = {
           cmd = { vim.fn.trim(vim.fn.system 'xcrun -f sourcekit-lsp') },
           filetypes = { 'swift', 'objective-c', 'objective-cpp' },
@@ -299,7 +300,7 @@ return {
 
       -- Install tools except sourcekit
       local ensure_installed = vim.tbl_filter(function(name)
-        return name ~= 'sourcekit'
+        return name ~= 'sourcekit' and name ~= 'gdscript'
       end, vim.tbl_keys(servers or {}))
       vim.list_extend(ensure_installed, { 'stylua' })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -318,6 +319,11 @@ return {
       -- Manual sourcekit setup
       if servers.sourcekit then
         setup_server('sourcekit', servers.sourcekit)
+      end
+
+      -- enable built-in Godot LSP client
+      if vim.lsp and vim.lsp.enable then
+        vim.lsp.enable 'gdscript'
       end
     end,
   },
