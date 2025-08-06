@@ -24,6 +24,9 @@ require('lazy').setup({
 
   require 'kickstart/plugins/treesitter',
 
+  -- NOTE: Git
+  require 'kickstart/plugins/neogit',
+
   -- NOTE: Utility
   require 'kickstart/plugins/mini',
 
